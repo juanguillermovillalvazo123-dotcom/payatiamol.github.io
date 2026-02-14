@@ -1,0 +1,246 @@
+!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planeta Neon 3D</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background: radial-gradient(circle at center, #2a0050, #000);
+    font-family: Arial, sans-serif;
+}
+</style>
+</head>
+
+<body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+
+/* ESCENA */
+const scene = new THREE.Scene();
+
+/* CAMARA LIBRE */
+const camera = new THREE.PerspectiveCamera(
+75,
+window.innerWidth/window.innerHeight,
+0.1,
+2000
+);
+camera.position.set(0,5,40);
+
+/* RENDER */
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+/* LUCES NEON */
+const light1 = new THREE.PointLight(0xaa66ff, 3, 300);
+light1.position.set(30,30,30);
+scene.add(light1);
+
+const light2 = new THREE.PointLight(0xff00ff, 2, 300);
+light2.position.set(-30,-20,20);
+scene.add(light2);
+
+/* PLANETA */
+const planetGeo = new THREE.SphereGeometry(7, 64, 64);
+const planetMat = new THREE.MeshStandardMaterial({
+color:0x6a00ff,
+emissive:0x6600ff,
+emissiveIntensity:1.5,
+roughness:0.4,
+metalness:0.6
+});
+const planet = new THREE.Mesh(planetGeo, planetMat);
+scene.add(planet);
+
+/* ANILLO */
+const ringGeo = new THREE.RingGeometry(10, 14, 64);
+const ringMat = new THREE.MeshBasicMaterial({
+color:0xff66ff,
+side:THREE.DoubleSide,
+transparent:true,
+opacity:0.7
+});
+const ring = new THREE.Mesh(ringGeo, ringMat);
+ring.rotation.x = Math.PI/2.3;
+scene.add(ring);
+
+/* EFECTO FLUORESCENTE PLANETA */
+const glowGeo = new THREE.SphereGeometry(8.5, 64, 64);
+const glowMat = new THREE.MeshBasicMaterial({
+color:0xaa33ff,
+transparent:true,
+opacity:0.15
+});
+const glow = new THREE.Mesh(glowGeo, glowMat);
+scene.add(glow);
+
+/* ESTRELLAS */
+const starsGeo = new THREE.BufferGeometry();
+const starCount = 3000;
+const starPos = new Float32Array(starCount * 3);
+
+for(let i=0;i<starCount*3;i++){
+starPos[i]=(Math.random()-0.5)*600;
+}
+
+starsGeo.setAttribute('position', new THREE.BufferAttribute(starPos,3));
+
+const starsMat = new THREE.PointsMaterial({
+size:1.2,
+color:0xd9b3ff
+});
+
+const stars = new THREE.Points(starsGeo, starsMat);
+scene.add(stars);
+
+/* TEXTO 3D */
+function crearTexto(texto,x,y,z){
+
+const canvas=document.createElement("canvas");
+const ctx=canvas.getContext("2d");
+
+canvas.width=512;
+canvas.height=256;
+
+/* SOMBRA + FLUORESCENTE */
+ctx.shadowColor="#ff00ff";
+ctx.shadowBlur=30;
+ctx.fillStyle="#ffffff";
+ctx.font="bold 48px Arial";
+
+ctx.fillText(texto,30,120);
+
+const texture=new THREE.CanvasTexture(canvas);
+
+const mat=new THREE.SpriteMaterial({
+map:texture,
+transparent:true
+});
+
+const sprite=new THREE.Sprite(mat);
+
+sprite.position.set(x,y,z);
+sprite.scale.set(12,6,1);
+
+scene.add(sprite);
+}
+
+/* CREAR 50 TEXTOS DISPERSOS */
+const palabras = [
+"Mi Tesoro 💜","Te amo","Mi Mundo","Mi Todo",
+"Mi Universo","Mi Amor","Mi Vida","Mi Estrella",
+"Mi Luz","Mi corazon","Mi preciosa","Perdon Por El Pasado",
+"Mi Sueño","Rolecito De Canela","Preciosa","Te amo",
+"Te Quiero","Te Adoro","Eres La Mejor","💜💜💜",
+"Eres La Mejor","Te Amo Muchísimo","Helmosa",
+"Preciosa","Perdon","Te Quiero Mucho","Princesa",
+"Linda","Hermosa","Chulada","Mi Bubu","Mi bombon",
+"Mi Estrella","Mi Mundo","La Unica","Purecito De Papa",
+"Mi sueño","Mi pensamiento","Hermosota","lindota",
+"Amolcito De Mi Vida","La Que Mas Amo","Te Amo💜",
+"Mi Luz","Me Encantas","Te Adoro","Te Quiero Y Te Amare",
+"Eres Mi Sol","Mi Luz""Perdon Por Las Cosas Malas",
+"Mi Mujel Bella","Corazoncito","La Mejor De La Mejor",
+"Lindotaa","💜","Mi Reina","Mi Todo","La Ma"Mi Leina",
+"Usted Siempre Es La Mejor","Linda","La Mas Bella",
+"Te Amo Con Todo Mi Ser","Siempre En Mi Mente,"Te Amo",
+"💜💜","💜💜","Mi Linda Girasol","🌻","🌻🌻🌻🌻🌻",
+"Te Quiero","Te Amo De Todo Corazon","Te Amoooooo",
+"Muaaak","Besos","Besos Likolinos","Feliz 14","Feliz Dia"
+
+
+
+
+];
+
+for(let i=0;i<50;i++){
+
+let texto = palabras[Math.floor(Math.random()*palabras.length)];
+
+crearTexto(
+texto,
+(Math.random()-0.5)*120,
+(Math.random()-0.5)*80,
+(Math.random()-0.5)*120
+);
+
+}
+
+/* CAMARA LIBRE */
+let isDragging=false;
+let prevX=0;
+let prevY=0;
+
+document.addEventListener("mousedown",e=>{
+isDragging=true;
+prevX=e.clientX;
+prevY=e.clientY;
+});
+
+document.addEventListener("mouseup",()=> isDragging=false);
+
+document.addEventListener("mousemove",e=>{
+if(!isDragging) return;
+
+let dx=e.clientX-prevX;
+let dy=e.clientY-prevY;
+
+camera.rotation.y -= dx*0.005;
+camera.rotation.x -= dy*0.005;
+
+prevX=e.clientX;
+prevY=e.clientY;
+});
+
+/* TOUCH */
+document.addEventListener("touchstart",e=>{
+isDragging=true;
+prevX=e.touches[0].clientX;
+prevY=e.touches[0].clientY;
+});
+
+document.addEventListener("touchend",()=> isDragging=false);
+
+document.addEventListener("touchmove",e=>{
+if(!isDragging) return;
+
+let dx=e.touches[0].clientX-prevX;
+let dy=e.touches[0].clientY-prevY;
+
+camera.rotation.y -= dx*0.005;
+camera.rotation.x -= dy*0.005;
+
+prevX=e.touches[0].clientX;
+prevY=e.touches[0].clientY;
+});
+
+/* LOOP */
+function animate(){
+requestAnimationFrame(animate);
+
+planet.rotation.y += 0.002;
+ring.rotation.z += 0.001;
+glow.rotation.y += 0.002;
+
+renderer.render(scene,camera);
+}
+animate();
+
+/* RESPONSIVE */
+window.addEventListener("resize",()=>{
+camera.aspect=window.innerWidth/window.innerHeight;
+camera.updateProjectionMatrix();
+renderer.setSize(window.innerWidth,window.innerHeight);
+});
+
+</script>
+
+</body>
+</html>
